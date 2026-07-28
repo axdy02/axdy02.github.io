@@ -376,7 +376,12 @@ function createCarLights(
     new THREE.Vector3(0, 0, -1),
   );
   const sourceGeometry = new THREE.TubeGeometry(curve, 40, 1, 8, false);
-  const geometry = new THREE.InstancedBufferGeometry().copy(sourceGeometry);
+  // Three's type declarations narrow InstancedBufferGeometry.copy() to only
+  // accept another instanced geometry, while the runtime implementation uses
+  // the shared BufferGeometry attributes we need here.
+  const geometry = new THREE.InstancedBufferGeometry().copy(
+    sourceGeometry as unknown as THREE.InstancedBufferGeometry,
+  );
   sourceGeometry.dispose();
   geometry.instanceCount = options.lightPairsPerRoadWay * 2;
 
@@ -487,7 +492,9 @@ function createSideSticks(
   distortionUniforms: DistortionUniforms,
 ) {
   const sourceGeometry = new THREE.PlaneGeometry(1, 1);
-  const geometry = new THREE.InstancedBufferGeometry().copy(sourceGeometry);
+  const geometry = new THREE.InstancedBufferGeometry().copy(
+    sourceGeometry as unknown as THREE.InstancedBufferGeometry,
+  );
   sourceGeometry.dispose();
   geometry.instanceCount = options.totalSideLightSticks;
 

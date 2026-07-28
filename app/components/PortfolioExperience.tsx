@@ -743,7 +743,9 @@ export default function PortfolioExperience() {
                     <span className="work-number">{project.index}</span>
                     <h3 className="work-name">{project.title}</h3>
                     <span className="work-type">{project.subtitle}</span>
-                    <span className="work-year">{project.year ?? "View system"}</span>
+                    <span className="work-year">
+                      {"year" in project ? project.year : "View system"}
+                    </span>
                     <span className="work-arrow" aria-hidden="true">
                       ↘
                     </span>
@@ -954,7 +956,7 @@ export default function PortfolioExperience() {
                       aria-label={link.ariaLabel}
                       target={link.external ? "_blank" : undefined}
                       rel={link.external ? "noreferrer" : undefined}
-                      download={link.download}
+                      download={"download" in link ? link.download : undefined}
                     >
                       {link.label}
                     </a>

@@ -8,10 +8,9 @@ fallback.
 ## Stack
 
 - Next.js App Router and TypeScript
-- Vinext and Vite
 - Motion
 - React Three Fiber and Drei
-- OpenAI Sites hosting
+- Vercel-ready Next.js deployment
 
 ## Local development
 
@@ -29,8 +28,8 @@ npm run lint
 npm test
 ```
 
-`npm test` creates a production Vinext build and verifies the rendered portfolio
-shell, source-backed claims, links, and required public assets.
+`npm test` creates a production Next.js build and verifies the rendered
+portfolio shell, source-backed claims, links, and required public assets.
 
 The contact form uses `NEXT_PUBLIC_CONTACT_ENDPOINT` when configured. Without
 that public endpoint it clearly falls back to a pre-filled `mailto:` message and
