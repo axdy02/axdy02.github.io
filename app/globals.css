@@ -374,12 +374,13 @@ img {
 .page-main {
   position: relative;
   z-index: 1;
-  overflow: clip;
+  overflow-x: clip;
 }
 
 .section-shell {
   position: relative;
   padding: var(--section-space) var(--page-pad);
+  scroll-margin-top: 5.5rem;
 }
 
 .section-grid {
@@ -791,6 +792,7 @@ img {
   position: relative;
   border-top: 1px solid var(--line);
   padding: var(--section-space) var(--page-pad);
+  scroll-margin-top: 5.5rem;
 }
 
 .case-heading-row {

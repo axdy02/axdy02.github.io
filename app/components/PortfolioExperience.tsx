@@ -561,6 +561,10 @@ export default function PortfolioExperience() {
 
   const closeMenu = () => {
     setMenuOpen(false);
+    // Release the scroll lock immediately when an in-menu anchor is chosen.
+    // The exit animation can remain mounted briefly, so waiting for the effect
+    // cleanup here would leave the page unscrollable during that transition.
+    document.body.classList.remove("menu-open");
     window.requestAnimationFrame(() => menuButtonRef.current?.focus());
   };
 
