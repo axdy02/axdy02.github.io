@@ -11,7 +11,6 @@ import {
 } from "motion/react";
 import {
   type CSSProperties,
-  type FormEvent,
   type PropsWithChildren,
   useEffect,
   useRef,
@@ -30,28 +29,52 @@ import {
   type NavSectionId,
   type Project,
 } from "../site-data";
+import Hyperspeed, {
+  type HyperspeedEffectOptions,
+} from "./Hyperspeed";
+import Particles from "./Particles";
 
 const HeroScene = dynamic(() => import("./HeroScene"), {
   ssr: false,
   loading: () => <div className="scene-loader">Initialising system core</div>,
 });
 
-const contactEndpoint = process.env.NEXT_PUBLIC_CONTACT_ENDPOINT;
+const BACKGROUND_PARTICLE_COLORS = ["#b8ff3d", "#92d52d", "#d6ff91"];
 
-type ContactValues = {
-  name: string;
-  email: string;
-  project: string;
-  message: string;
-};
-
-type ContactErrors = Partial<Record<keyof ContactValues, string>>;
-
-const initialContactValues: ContactValues = {
-  name: "",
-  email: "",
-  project: "",
-  message: "",
+const HERO_HYPERSPEED_OPTIONS: HyperspeedEffectOptions = {
+  distortion: "turbulentDistortion",
+  length: 400,
+  roadWidth: 10,
+  islandWidth: 2,
+  lanesPerRoad: 3,
+  fov: 90,
+  fovSpeedUp: 150,
+  speedUp: 2,
+  carLightsFade: 0.4,
+  totalSideLightSticks: 20,
+  lightPairsPerRoadWay: 40,
+  shoulderLinesWidthPercentage: 0.05,
+  brokenLinesWidthPercentage: 0.1,
+  brokenLinesLengthPercentage: 0.5,
+  lightStickWidth: [0.12, 0.5],
+  lightStickHeight: [1.3, 1.7],
+  movingAwaySpeed: [60, 80],
+  movingCloserSpeed: [-120, -160],
+  carLightsLength: [12, 80],
+  carLightsRadius: [0.05, 0.14],
+  carWidthPercentage: [0.3, 0.5],
+  carShiftX: [-0.8, 0.8],
+  carFloorSeparation: [0, 5],
+  colors: {
+    roadColor: 0x050805,
+    islandColor: 0x0b1409,
+    background: 0x000000,
+    shoulderLines: 0x263b18,
+    brokenLines: 0x1d3112,
+    leftCars: [0x2d5a17, 0x6fae2b, 0xb8ff3d],
+    rightCars: [0x173b0d, 0x4e851d, 0x91d72d],
+    sticks: 0xa8f335,
+  },
 };
 
 function Reveal({
@@ -98,6 +121,37 @@ function ExternalAction({
   );
 }
 
+async function copyText(value: string) {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value);
+      return true;
+    }
+  } catch {
+    // Fall through to the synchronous browser fallback.
+  }
+
+  const field = document.createElement("textarea");
+  field.value = value;
+  field.setAttribute("readonly", "");
+  field.style.position = "fixed";
+  field.style.opacity = "0";
+  field.style.pointerEvents = "none";
+  document.body.appendChild(field);
+  field.select();
+
+  let copied = false;
+  try {
+    copied = document.execCommand("copy");
+  } catch {
+    copied = false;
+  } finally {
+    field.remove();
+  }
+
+  return copied;
+}
+
 function SectionKicker({
   index,
   children,
@@ -106,47 +160,6 @@ function SectionKicker({
     <p className="section-kicker">
       {index} / {children}
     </p>
-  );
-}
-
-function MediaFrame({
-  media,
-  eager = false,
-  compact = false,
-}: {
-  media: Project["media"][number];
-  eager?: boolean;
-  compact?: boolean;
-}) {
-  const dimensions = media.src.includes("logo")
-    ? { width: 216, height: 53 }
-    : media.src.includes("area-intelligence")
-      ? { width: 1845, height: 1053 }
-      : media.src.includes("dashboard.png") &&
-          media.src.includes("floodready")
-        ? { width: 1844, height: 1032 }
-        : media.src.includes("floodready-map")
-          ? { width: 1863, height: 1042 }
-          : media.src.includes("floodready-reports")
-            ? { width: 1846, height: 1046 }
-            : media.src.includes("submit-report")
-              ? { width: 1845, height: 1033 }
-              : media.src.includes("emostudy")
-                ? { width: 1849, height: 1044 }
-                : { width: 1844, height: 1044 };
-
-  return (
-    <figure className={`media-card${compact ? " is-logo" : ""}`}>
-      <figcaption className="media-label">{media.caption}</figcaption>
-      <img
-        src={media.src}
-        alt={media.alt}
-        width={dimensions.width}
-        height={dimensions.height}
-        loading={eager ? "eager" : "lazy"}
-        decoding="async"
-      />
-    </figure>
   );
 }
 
@@ -185,7 +198,7 @@ function ProjectNotes({ project }: { project: Project }) {
 
 function ProjectMeta({ project }: { project: Project }) {
   return (
-    <div>
+    <div className="project-meta-block">
       <dl className="case-meta">
         {project.year ? (
           <div>
@@ -216,7 +229,7 @@ function ProjectMeta({ project }: { project: Project }) {
 
 function FloodReadyCase() {
   const project = projects[0];
-  const [heroMedia, ...supportingMedia] = project.media;
+  const heroMedia = project.media[0];
 
   return (
     <article className="case-study" id={project.slug}>
@@ -225,40 +238,32 @@ function FloodReadyCase() {
           <SectionKicker index="01">Flagship system</SectionKicker>
           <h2 className="case-title acid">{project.title}</h2>
         </div>
-        <div className="case-intro">
-          <div>
+        <div className="case-intro floodready-intro">
+          <div className="floodready-copy">
             <p className="case-lede">{project.summary}</p>
             <p className="case-supporting">{project.supportingLine}</p>
           </div>
-          <ProjectMeta project={project} />
+          <div className="floodready-aside">
+            <figure className="floodready-preview-frame">
+              <figcaption>
+                <span>Landing experience</span>
+                <span>Live product / 2026</span>
+              </figcaption>
+              <div className="floodready-preview-window">
+                <img
+                  src={heroMedia.src}
+                  alt={heroMedia.alt}
+                  width="1844"
+                  height="1044"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+            </figure>
+            <ProjectMeta project={project} />
+          </div>
         </div>
       </Reveal>
-
-      <Reveal className="project-hero-media">
-        <span className="media-label">{heroMedia.caption}</span>
-        <img
-          src={heroMedia.src}
-          alt={heroMedia.alt}
-          width="1844"
-          height="1044"
-          loading="lazy"
-          decoding="async"
-        />
-      </Reveal>
-
-      <div className="media-grid">
-        {supportingMedia.map((media, index) => (
-          <Reveal
-            key={media.src}
-            className={index === supportingMedia.length - 1 ? "media-logo-wrap" : ""}
-          >
-            <MediaFrame
-              media={media}
-              compact={index === supportingMedia.length - 1}
-            />
-          </Reveal>
-        ))}
-      </div>
 
       <Reveal>
         <ProjectNotes project={project} />
@@ -346,7 +351,6 @@ function EmoStudyCase() {
 
 function AquaVisionCase() {
   const project = projects[2];
-  const stages = ["Original", "Restored", "Enhanced", "Detected"];
 
   return (
     <article className="case-study" id={project.slug}>
@@ -359,8 +363,8 @@ function AquaVisionCase() {
           <div>
             <p className="case-lede">{project.summary}</p>
             <p className="case-supporting">
-              Visual samples are being prepared. The pipeline and source code are
-              available now.
+              One underwater frame, shown through restoration, enhancement, and
+              the final detection output.
             </p>
           </div>
           <ProjectMeta project={project} />
@@ -368,16 +372,31 @@ function AquaVisionCase() {
       </Reveal>
 
       <Reveal className="aquavision-stage">
-        <div className="stage-placeholder">
-          {stages.map((stage, index) => (
-            <div className="stage-node" key={stage}>
-              <b>{String(index + 1).padStart(2, "0")}</b>
-              <span>{stage}</span>
-            </div>
+        <div
+          className="aquavision-gallery"
+          aria-label="AquaVision image processing stages"
+        >
+          {project.media.map((media, index) => (
+            <figure className="aquavision-frame" key={media.src}>
+              <figcaption>
+                <b>{String(index + 1).padStart(2, "0")}</b>
+                <span>{media.caption}</span>
+              </figcaption>
+              <div className="aquavision-image">
+                <img
+                  src={media.src}
+                  alt={media.alt}
+                  width="270"
+                  height="269"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+            </figure>
           ))}
         </div>
         <div className="stage-caption">
-          <span>Pipeline visual / samples deliberately withheld until ready</span>
+          <span>One source frame / four processing stages</span>
           <span>Classical image processing + lightweight detection</span>
         </div>
       </Reveal>
@@ -404,156 +423,9 @@ function AquaVisionCase() {
   );
 }
 
-function ContactForm() {
-  const [values, setValues] = useState(initialContactValues);
-  const [errors, setErrors] = useState<ContactErrors>({});
-  const [status, setStatus] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-
-  const setValue = (field: keyof ContactValues, value: string) => {
-    setValues((current) => ({ ...current, [field]: value }));
-    if (errors[field]) {
-      setErrors((current) => ({ ...current, [field]: undefined }));
-    }
-  };
-
-  const validate = () => {
-    const nextErrors: ContactErrors = {};
-    if (!values.name.trim()) nextErrors.name = "Please add your name.";
-    if (!values.email.trim()) {
-      nextErrors.email = "Please add your email.";
-    } else if (!/^\S+@\S+\.\S+$/.test(values.email)) {
-      nextErrors.email = "Please use a valid email address.";
-    }
-    if (!values.message.trim()) {
-      nextErrors.message = "Tell me a little about the problem.";
-    }
-    setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
-  };
-
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setStatus("");
-    if (!validate()) return;
-
-    if (!contactEndpoint) {
-      const subject = encodeURIComponent(
-        values.project.trim()
-          ? `${values.project.trim()} — portfolio enquiry`
-          : "Portfolio enquiry",
-      );
-      const body = encodeURIComponent(
-        `Hi Ansh,\n\n${values.message.trim()}\n\nFrom: ${values.name.trim()} (${values.email.trim()})`,
-      );
-      setStatus("Opening your email app with this message filled in.");
-      window.location.href = `mailto:${site.email}?subject=${subject}&body=${body}`;
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const response = await fetch(contactEndpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
-      });
-      if (!response.ok) throw new Error("Contact endpoint rejected the message.");
-      setValues(initialContactValues);
-      setStatus("Message sent. I’ll get back to you soon.");
-    } catch {
-      setStatus(
-        `The form could not send right now. Email me directly at ${site.email}.`,
-      );
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  return (
-    <form className="contact-form" onSubmit={submit} noValidate>
-      <div className="field-row">
-        <div className="field">
-          <label htmlFor="name">Your name</label>
-          <input
-            id="name"
-            name="name"
-            autoComplete="name"
-            value={values.name}
-            onChange={(event) => setValue("name", event.target.value)}
-            aria-invalid={Boolean(errors.name)}
-            aria-describedby="name-error"
-            placeholder="How should I address you?"
-          />
-          <span className="field-error" id="name-error">
-            {errors.name}
-          </span>
-        </div>
-        <div className="field">
-          <label htmlFor="email">Email</label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            value={values.email}
-            onChange={(event) => setValue("email", event.target.value)}
-            aria-invalid={Boolean(errors.email)}
-            aria-describedby="email-error"
-            placeholder="you@example.com"
-          />
-          <span className="field-error" id="email-error">
-            {errors.email}
-          </span>
-        </div>
-      </div>
-      <div className="field">
-        <label htmlFor="project">Project or opportunity</label>
-        <input
-          id="project"
-          name="project"
-          value={values.project}
-          onChange={(event) => setValue("project", event.target.value)}
-          placeholder="What are we exploring?"
-        />
-        <span className="field-error" aria-hidden="true" />
-      </div>
-      <div className="field">
-        <label htmlFor="message">The problem</label>
-        <textarea
-          id="message"
-          name="message"
-          value={values.message}
-          onChange={(event) => setValue("message", event.target.value)}
-          aria-invalid={Boolean(errors.message)}
-          aria-describedby="message-error"
-          placeholder="A few useful details are enough to start."
-        />
-        <span className="field-error" id="message-error">
-          {errors.message}
-        </span>
-      </div>
-      <div className="form-footer">
-        <div>
-          <p className="form-note">
-            {contactEndpoint
-              ? "Your message is sent through the connected contact service."
-              : "This static portfolio opens your email app; nothing is stored here."}
-          </p>
-          <p className="form-status" aria-live="polite">
-            {status}
-          </p>
-        </div>
-        <button className="button" type="submit" disabled={submitting}>
-          {submitting ? "Sending" : "Start a conversation"}
-        </button>
-      </div>
-    </form>
-  );
-}
-
 export default function PortfolioExperience() {
-  const [booting, setBooting] = useState(false);
+  const [booting, setBooting] = useState(true);
+  const [emailCopied, setEmailCopied] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeSection, setActiveSection] =
     useState<NavSectionId>("work");
@@ -561,6 +433,7 @@ export default function PortfolioExperience() {
   const menuRef = useRef<HTMLDivElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const cursorRef = useRef<HTMLDivElement>(null);
+  const emailResetTimerRef = useRef(0);
   const reducedMotion = useReducedMotion();
   const { scrollYProgress } = useScroll();
   const progress = useSpring(scrollYProgress, {
@@ -570,26 +443,36 @@ export default function PortfolioExperience() {
   });
 
   useEffect(() => {
-    let timer = 0;
-    const frame = window.requestAnimationFrame(() => {
-      try {
-        const hasBooted = window.sessionStorage.getItem("ak-portfolio-booted");
-        if (hasBooted || reducedMotion) return;
-        setBooting(true);
-        timer = window.setTimeout(() => {
-          setBooting(false);
-          window.sessionStorage.setItem("ak-portfolio-booted", "true");
-        }, 1050);
-      } catch {
-        setBooting(true);
-        timer = window.setTimeout(() => setBooting(false), 700);
-      }
-    });
+    const timer = window.setTimeout(
+      () => setBooting(false),
+      reducedMotion ? 350 : 1050,
+    );
+
     return () => {
-      window.cancelAnimationFrame(frame);
       window.clearTimeout(timer);
     };
   }, [reducedMotion]);
+
+  useEffect(
+    () => () => window.clearTimeout(emailResetTimerRef.current),
+    [],
+  );
+
+  const handleEmailCopy = async () => {
+    const copied = await copyText(site.email);
+
+    if (!copied) {
+      window.location.href = `mailto:${site.email}`;
+      return;
+    }
+
+    window.clearTimeout(emailResetTimerRef.current);
+    setEmailCopied(true);
+    emailResetTimerRef.current = window.setTimeout(
+      () => setEmailCopied(false),
+      2200,
+    );
+  };
 
   useEffect(() => {
     const update = () => setScrolled(window.scrollY > 24);
@@ -686,6 +569,20 @@ export default function PortfolioExperience() {
       <a className="skip-link" href="#main">
         Skip to content
       </a>
+      <Particles
+        className="site-particles"
+        particleColors={BACKGROUND_PARTICLE_COLORS}
+        particleCount={200}
+        particleSpread={10}
+        speed={0.08}
+        particleBaseSize={90}
+        sizeRandomness={0.85}
+        moveParticlesOnHover
+        particleHoverFactor={0.55}
+        alphaParticles={false}
+        disableRotation={false}
+        pixelRatio={1}
+      />
       <motion.div
         className="scroll-progress"
         style={{ scaleX: progress }}
@@ -701,7 +598,7 @@ export default function PortfolioExperience() {
           >
             <div className="boot-inner">
               <div className="boot-copy">
-                <strong>{site.mark}</strong>
+                <strong>{site.name}</strong>
                 <span>
                   System online
                   <br />
@@ -718,13 +615,11 @@ export default function PortfolioExperience() {
 
       <header className={`topbar${scrolled ? " is-scrolled" : ""}`}>
         <a className="monogram" href="#top" aria-label="Ansh Kapoor, home">
-          <span className="monogram-mark">{site.mark}</span>
+          <span className="monogram-mark" aria-hidden="true">
+            {site.mark}
+          </span>
           <span>{site.name}</span>
         </a>
-        <span className="topbar-status">
-          <i className="status-dot" aria-hidden="true" />
-          {site.availability}
-        </span>
         <nav className="nav-links" aria-label="Primary navigation">
           {navItems.map((item) => (
             <a
@@ -784,34 +679,32 @@ export default function PortfolioExperience() {
                 <span>{site.headline[0]}</span>
                 <span>{site.headline[1]}</span>
               </h1>
-              <div className="hero-summary-row">
-                <p className="hero-summary">{site.summary}</p>
-                <div className="action-row">
-                  <ExternalAction href="#work" className="primary">
-                    Explore work
-                  </ExternalAction>
-                  <ExternalAction
-                    href={assetPaths.resume}
-                    className="download"
-                    download="Ansh-Kapoor-Resume.pdf"
-                  >
-                    Resume
-                  </ExternalAction>
-                </div>
+              <div className="action-row hero-actions">
+                <ExternalAction href="#work" className="primary">
+                  Explore work
+                </ExternalAction>
+                <ExternalAction
+                  href={assetPaths.resume}
+                  className="download"
+                  download="Ansh-Kapoor-Resume.pdf"
+                >
+                  Resume
+                </ExternalAction>
               </div>
             </div>
           </div>
-          <div className="hero-visual" aria-label="Abstract AK system core">
-            <div className="scene-fallback" aria-hidden="true">
-              <div className="scene-fallback-core">AK</div>
-            </div>
-            <HeroScene />
-            <span className="visual-corner">AK / System core / 01</span>
-            <span className="visual-index">Full-stack / product / systems</span>
+          <div
+            className="hero-visual"
+            id="hero-core-window"
+            role="img"
+            aria-label="Interactive AK system core. Click and drag horizontally to rotate it."
+          >
+            <Hyperspeed
+              className="hero-hyperspeed"
+              effectOptions={HERO_HYPERSPEED_OPTIONS}
+            />
+            <HeroScene className="hero-scene" />
           </div>
-          <span className="scroll-cue" aria-hidden="true">
-            Scroll to inspect
-          </span>
         </section>
 
         <div className="proof-strip" aria-label="Selected proof points">
@@ -1012,29 +905,61 @@ export default function PortfolioExperience() {
             <div className="contact-copy">
               <p>
                 Have an internship, graduate role, or product problem where a
-                curious full-stack builder could help? Send the useful context.
+                curious full-stack builder could help? Send the useful context
+                directly.
               </p>
+              <p className="contact-copy-note">
+                Email is the clearest way to start. You can also find my work,
+                profile, and résumé below.
+              </p>
+            </div>
+            <div className="contact-direct">
+              <p className="contact-direct-label">
+                {emailCopied ? "Copied to clipboard" : "Direct email"}
+              </p>
+              <button
+                className={`contact-email${emailCopied ? " is-copied" : ""}`}
+                type="button"
+                onClick={handleEmailCopy}
+                aria-label={`Copy email address ${site.email}`}
+                aria-describedby="email-copy-status"
+              >
+                <span>{site.email}</span>
+                <span aria-hidden="true">
+                  {emailCopied ? "Copied" : "Copy"}
+                </span>
+              </button>
+              <span
+                className="sr-only"
+                id="email-copy-status"
+                role="status"
+                aria-live="polite"
+              >
+                {emailCopied
+                  ? `${site.email} copied to clipboard.`
+                  : "Click to copy the email address."}
+              </span>
               <div className="contact-links">
-                {contactLinks.map((link) => (
-                  <a
-                    className="contact-link"
-                    href={link.href}
-                    key={link.id}
-                    aria-label={link.ariaLabel}
-                    target={link.external ? "_blank" : undefined}
-                    rel={link.external ? "noreferrer" : undefined}
-                    download={link.download}
-                  >
-                    {link.label}
-                  </a>
-                ))}
+                {contactLinks
+                  .filter((link) => link.id !== "email")
+                  .map((link) => (
+                    <a
+                      className="contact-link"
+                      href={link.href}
+                      key={link.id}
+                      aria-label={link.ariaLabel}
+                      target={link.external ? "_blank" : undefined}
+                      rel={link.external ? "noreferrer" : undefined}
+                      download={link.download}
+                    >
+                      {link.label}
+                    </a>
+                  ))}
               </div>
             </div>
-            <ContactForm />
           </div>
           <footer className="footer">
             <span>© 2026 Ansh Kapoor</span>
-            <span>Designed and engineered in Delhi</span>
             <a href="#top">Back to top ↑</a>
           </footer>
         </section>

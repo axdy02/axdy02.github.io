@@ -21,9 +21,7 @@ export type SiteMetadata = {
   readonly title: string;
   readonly description: string;
   readonly headline: readonly [string, string];
-  readonly summary: string;
   readonly identityLabel: string;
-  readonly availability: string;
   readonly heroMicrocopy: string;
   readonly about: {
     readonly primary: string;
@@ -42,12 +40,6 @@ export type AssetPaths = {
   readonly projects: {
     readonly floodready: {
       readonly landing: string;
-      readonly dashboard: string;
-      readonly map: string;
-      readonly submitReport: string;
-      readonly areaIntelligence: string;
-      readonly reports: string;
-      readonly logo: string;
     };
     readonly emostudy: {
       readonly focusDashboard: string;
@@ -144,14 +136,6 @@ export const assetPaths = {
   projects: {
     floodready: {
       landing: "/media/projects/floodready/floodready-landing.png",
-      dashboard: "/media/projects/floodready/floodready-dashboard.png",
-      map: "/media/projects/floodready/floodready-map.png",
-      submitReport:
-        "/media/projects/floodready/floodready-submit-report.png",
-      areaIntelligence:
-        "/media/projects/floodready/floodready-area-intelligence.png",
-      reports: "/media/projects/floodready/floodready-reports.png",
-      logo: "/media/projects/floodready/floodready-logo.png",
     },
     emostudy: {
       focusDashboard:
@@ -176,10 +160,7 @@ export const site = {
   description:
     "Portfolio of Ansh Kapoor, a full-stack developer building intelligent, real-world web applications across interfaces, APIs, data, and deployment.",
   headline: ["ALWAYS LEARNING.", "ALWAYS GROWING."],
-  summary:
-    "Full-stack developer building intelligent, real-world web applications.",
   identityLabel: "ANSH KAPOOR / FULL-STACK DEVELOPER / DELHI, INDIA",
-  availability: "Open to internships and graduate software roles.",
   heroMicrocopy:
     "Built with curiosity, careful systems, and an unreasonable number of browser tabs.",
   about: {
@@ -256,42 +237,6 @@ export const projects = [
         src: assetPaths.projects.floodready.landing,
         alt: "FloodReady landing page with a dark map, product headline, demonstration state, and calls to action.",
         caption: "Landing experience",
-        status: "available",
-      },
-      {
-        src: assetPaths.projects.floodready.dashboard,
-        alt: "FloodReady dashboard showing validation metrics and a shared report map.",
-        caption: "Validation dashboard",
-        status: "available",
-      },
-      {
-        src: assetPaths.projects.floodready.map,
-        alt: "FloodReady reports map with sidebar navigation, persisted report markers, a severity legend, and a submit action.",
-        caption: "Shared reports map",
-        status: "available",
-      },
-      {
-        src: assetPaths.projects.floodready.submitReport,
-        alt: "FloodReady report submission interface with category, severity, location selection, and an interactive map.",
-        caption: "Geotagged report submission",
-        status: "available",
-      },
-      {
-        src: assetPaths.projects.floodready.areaIntelligence,
-        alt: "FloodReady area intelligence screen with place search, map radius, report summary, and an AI area-summary panel.",
-        caption: "Area intelligence",
-        status: "available",
-      },
-      {
-        src: assetPaths.projects.floodready.reports,
-        alt: "FloodReady reports list showing evidence thumbnails, user severity, AI assessment, timestamps, location, confidence, and validation state.",
-        caption: "Evidence and validation states",
-        status: "available",
-      },
-      {
-        src: assetPaths.projects.floodready.logo,
-        alt: "FloodReady product logo with a live-status label.",
-        caption: "FloodReady project mark",
         status: "available",
       },
     ],
@@ -371,27 +316,27 @@ export const projects = [
     media: [
       {
         src: assetPaths.projects.aquavision.original,
-        alt: "Reserved AquaVision frame for the original underwater image before processing.",
-        caption: "Original · Visual sample being prepared",
-        status: "planned",
+        alt: "Original hazy underwater frame showing a seated scuba diver.",
+        caption: "Original input",
+        status: "available",
       },
       {
         src: assetPaths.projects.aquavision.restored,
-        alt: "Reserved AquaVision frame for the color-restored underwater image.",
-        caption: "Restored · Visual sample being prepared",
-        status: "planned",
+        alt: "Color-restored underwater frame showing the same seated scuba diver.",
+        caption: "Color restored",
+        status: "available",
       },
       {
         src: assetPaths.projects.aquavision.enhanced,
-        alt: "Reserved AquaVision frame for the contrast-enhanced underwater image.",
-        caption: "Enhanced · Visual sample being prepared",
-        status: "planned",
+        alt: "Contrast-enhanced underwater frame with clearer diver and seabed detail.",
+        caption: "Contrast enhanced",
+        status: "available",
       },
       {
         src: assetPaths.projects.aquavision.detected,
-        alt: "Reserved AquaVision frame for the underwater image with detected regions highlighted.",
-        caption: "Detected · Visual sample being prepared",
-        status: "planned",
+        alt: "AquaVision output showing the diver inside a green detection box labelled Object 1.",
+        caption: "Detection output",
+        status: "available",
       },
     ],
     technicalHighlights: [
