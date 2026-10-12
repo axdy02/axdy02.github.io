@@ -34,6 +34,10 @@ existing build variables, runtime secrets, routes, and custom domains in the
 Cloudflare dashboard. Set `NEXT_PUBLIC_SITE_URL` as a build variable if the
 production URL should appear in page metadata.
 
+For Preview branches, use `npm run cf:build` as the build command and
+`npx wrangler versions upload` as the preview command. This checks that the
+generated Worker can be uploaded without deploying the branch to production.
+
 ## Validation
 
 ```bash
