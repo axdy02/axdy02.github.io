@@ -35,8 +35,9 @@ Cloudflare dashboard. Set `NEXT_PUBLIC_SITE_URL` as a build variable if the
 production URL should appear in page metadata.
 
 For Preview branches, use `npm run cf:build` as the build command and
-`npx wrangler versions upload` as the preview command. This checks that the
-generated Worker can be uploaded without deploying the branch to production.
+`npx wrangler preview` as the preview command. The `previews` block in
+`wrangler.jsonc` enables Cloudflare Worker Previews without deploying the
+branch to production.
 If a Preview branch already exists in Cloudflare, update its own build
 configuration too; branch settings override the Previews Base settings.
 

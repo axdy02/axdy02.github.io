@@ -13,5 +13,6 @@
       "binding": "WORKER_SELF_REFERENCE",
       "service": "axdy02-github-io"
     }
-  ]
+  ],
+  "previews": {}
 }
