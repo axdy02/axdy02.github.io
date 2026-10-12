@@ -8,18 +8,22 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "cf:build": "opennextjs-cloudflare build",
+    "cf:deploy": "opennextjs-cloudflare deploy",
+    "deploy": "npm run cf:build && npm run cf:deploy",
     "start": "next start",
     "test": "npm run build && node --test tests/rendered-html.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
+    "@opennextjs/cloudflare": "1.20.10",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
     "@types/three": "^0.185.1",
     "drizzle-orm": "0.45.2",
     "motion": "^12.42.2",
-    "next": "16.2.6",
+    "next": "16.3.8",
     "ogl": "^1.0.11",
     "postprocessing": "^6.39.4",
     "react": "19.2.6",
@@ -33,9 +37,10 @@
     "@types/react-dom": "19.2.3",
     "drizzle-kit": "0.31.10",
     "eslint": "9.39.4",
-    "eslint-config-next": "16.2.6",
+    "eslint-config-next": "16.3.8",
     "tailwindcss": "4.2.1",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "wrangler": "4.149.0"
   },
   "type": "module"
 }
